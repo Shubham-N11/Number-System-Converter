@@ -5,7 +5,7 @@ void decimalToBinary(int num)
     int i=0;
     
     printf("Decimal to Binary is :\n");
-
+    
     while (num > 0)
     {
         remain = num % 2;
@@ -18,7 +18,27 @@ void decimalToBinary(int num)
     {
         printf("%d", binary[j]);
     }
+}
 
+void decimalToOctal(int num)
+{
+    int remain = 0, octal[32];
+    int i=0;
+    
+    printf("Decimal to Octal is :\n");
+
+    while (num > 0)
+    {
+        remain = num % 8;
+        octal[i] = remain;
+        num = num / 8;
+        i++;
+    }
+
+    for (int j = i - 1; j >= 0; j--)
+    {
+        printf("%d", octal[j]);
+    }
 }
 
 int main()
@@ -37,8 +57,7 @@ int main()
         printf("0");
         return 0;
     }
-    else
-    {
-        decimalToBinary(num);
-    }
+
+    // decimalToBinary(num);
+    decimalToOctal(num);
 }
