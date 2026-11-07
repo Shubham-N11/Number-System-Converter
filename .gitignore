@@ -1,2 +1,5 @@
+# Compiled files
 *.exe
+
+# IDE
 .vscode/
