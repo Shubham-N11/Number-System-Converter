@@ -94,17 +94,23 @@ void decimalToHexadecimal(int num)
     }
 }
 
-void decimalToBase(int num, int base)
+void decimalToBase(int decimal, int destinationBase)
 {
     int remain = 0;
     char output[32];
     int i = 0;
 
-    printf("Decimal to Base %d is :\n", base);
+    printf("Decimal to Base %d is :\n", destinationBase);
 
-    while (num > 0)
+    if (decimal == 0)
     {
-        remain = num % base;
+        printf("0");
+        return;
+    }
+
+    while (decimal > 0)
+    {
+        remain = decimal % destinationBase;
         if (remain > 9)
         {
             switch (remain)
@@ -134,7 +140,7 @@ void decimalToBase(int num, int base)
             remain = '0' + remain;
         }
         output[i] = remain;
-        num = num / base;
+        decimal = decimal / destinationBase;
         i++;
     }
 
@@ -185,6 +191,8 @@ int main()
     char num[32];
     int base;
     int result = 0;
+    int destinationBase;
+
     printf("Enter number : ");
     scanf("%31s", num);
     printf("Enter base : ");
@@ -205,7 +213,7 @@ int main()
     // decimalToBinary(num);
     // decimalToOctal(num);
     // decimalToHexadecimal(num);
-    // decimalToBase(num, base);
+    // decimalToBase(decimal, destinationBase);
     result = baseToDecimal(num, base);
 
     if (result == -1)
@@ -213,5 +221,17 @@ int main()
         return 0;
     }
 
+    printf("Enter destination base: ");
+    scanf("%d", &destinationBase);
+
+    if (destinationBase != 2 && destinationBase != 8 && destinationBase != 16)
+    {
+        printf("Invalid destination base.");
+        return 0;
+    }
+
     printf("Decimal: %d\n", result);
+
+    printf("Converted number:\n");
+    decimalToBase(result, destinationBase);
 }
