@@ -48,10 +48,61 @@ void decimalToHexadecimal(int num)
     int i=0;
     
     printf("Decimal to Hexadecimal is :\n");
-
+    
     while (num > 0)
     {
         remain = num % 16;
+        if(remain > 9)
+        {
+            switch(remain)
+            {
+                case 10 :
+                remain = 'A';
+                break;
+                case 11 :
+                remain = 'B';
+                break;
+                case 12 :
+                remain = 'C';
+                break;
+                case 13 :
+                remain = 'D';
+                break;
+                case 14 :
+                remain = 'E';
+                break;
+                case 15 :
+                remain = 'F';
+                break;
+            }
+        }
+        else
+        {
+            remain = remain + '0';
+        }
+        
+        hexadecimal[i] = remain;
+        num = num / 16;
+        i++;
+    }
+    
+    for (int j = i - 1; j >= 0; j--)
+    {
+        printf("%c", hexadecimal[j]);
+    }
+}
+
+void decimalToBase(int num, int base)
+{
+    int remain = 0;
+    char output[32];
+    int i=0;
+    
+    printf("Decimal to Base %d is :\n", base);
+
+    while (num > 0)
+    {
+        remain = num % base;
         if(remain > 9)
         {
             switch(remain)
@@ -78,25 +129,26 @@ void decimalToHexadecimal(int num)
         }
         else
         {
-            remain = remain + '0';
+            remain = '0' + remain;
         }
-
-        hexadecimal[i] = remain;
-        num = num / 16;
+        output[i] = remain;
+        num = num / base; 
         i++;
     }
     
     for (int j = i - 1; j >= 0; j--)
     {
-        printf("%c", hexadecimal[j]);
+        printf("%c", output[j]);
     }
 }
 
 int main()
 {
-    int num;
+    int num, base;
     printf("Enter decimal: ");
     scanf("%d", &num);
+    printf("Enter base: ");
+    scanf("%d", &base);
     
     if(num <= 0)
     {
@@ -111,5 +163,6 @@ int main()
 
     // decimalToBinary(num);
     // decimalToOctal(num);
-    decimalToHexadecimal(num);
+    // decimalToHexadecimal(num);
+    decimalToBase(num, base);
 }
