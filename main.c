@@ -26,7 +26,7 @@ void decimalToOctal(int num)
     int i=0;
     
     printf("Decimal to Octal is :\n");
-
+    
     while (num > 0)
     {
         remain = num % 8;
@@ -34,10 +34,61 @@ void decimalToOctal(int num)
         num = num / 8;
         i++;
     }
-
+    
     for (int j = i - 1; j >= 0; j--)
     {
         printf("%d", octal[j]);
+    }
+}
+
+void decimalToHexadecimal(int num)
+{
+    int remain = 0;
+    char hexadecimal[32];
+    int i=0;
+    
+    printf("Decimal to Hexadecimal is :\n");
+
+    while (num > 0)
+    {
+        remain = num % 16;
+        if(remain > 9)
+        {
+            switch(remain)
+            {
+                case 10 :
+                    remain = 'A';
+                    break;
+                case 11 :
+                    remain = 'B';
+                    break;
+                case 12 :
+                    remain = 'C';
+                    break;
+                case 13 :
+                    remain = 'D';
+                    break;
+                case 14 :
+                    remain = 'E';
+                    break;
+                case 15 :
+                    remain = 'F';
+                    break;
+            }
+        }
+        else
+        {
+            remain = remain + '0';
+        }
+
+        hexadecimal[i] = remain;
+        num = num / 16;
+        i++;
+    }
+    
+    for (int j = i - 1; j >= 0; j--)
+    {
+        printf("%c", hexadecimal[j]);
     }
 }
 
@@ -59,5 +110,6 @@ int main()
     }
 
     // decimalToBinary(num);
-    decimalToOctal(num);
+    // decimalToOctal(num);
+    decimalToHexadecimal(num);
 }
