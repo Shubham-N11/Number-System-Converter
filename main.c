@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 void decimalToBinary(int num)
 {
@@ -94,10 +95,10 @@ void decimalToHexadecimal(int num)
     }
 }
 
-void decimalToBase(int decimal, int destinationBase)
+void decimalToBase(long long decimal, int destinationBase)
 {
     int remain = 0;
-    char output[32];
+    char output[65];
     int i = 0;
 
     printf("Converted value in base %d is :\n", destinationBase);
@@ -150,10 +151,12 @@ void decimalToBase(int decimal, int destinationBase)
     }
 }
 
-int baseToDecimal(char num[], int base)
+
+long long baseToDecimal(char num[], int base)
 {
-    int decimal = 0;
-    int power = 1;
+    long long decimal = 0;
+    long long power = 1;
+    long long term;
     int digit;
 
     for (int i = strlen(num) - 1; i >= 0; i--)
@@ -175,14 +178,44 @@ int baseToDecimal(char num[], int base)
             printf("Invalid character");
             return -1;
         }
+
         if (digit >= base)
         {
             printf("Invalid digit for the given base.");
             return -1;
         }
-        decimal += digit * power;
-        power *= base;
+
+        // Check multiplication overflow
+        if (digit != 0 && power > LLONG_MAX / digit)
+        {
+            printf("Integer overflow detected.");
+            return -1;
+        }
+
+        term = digit * power;
+
+        // Check addition overflow
+        if (decimal > LLONG_MAX - term)
+        {
+            printf("Integer overflow detected.");
+            return -1;
+        }
+
+        decimal += term;
+
+        // Check positional power overflow
+        if (i > 0 && power > LLONG_MAX / base)
+        {
+            printf("Integer overflow detected.");
+            return -1;
+        }
+
+        if (i > 0)
+        {
+            power *= base;
+        }
     }
+
     return decimal;
 }
 
@@ -190,11 +223,11 @@ int main()
 {
     char num[32];
     int base;
-    int result = 0;
+    long long result = 0;
     int destinationBase;
 
     printf("Enter number : ");
-    
+
     if (scanf("%31s", num) != 1)
     {
         printf("No input provided.");
@@ -208,32 +241,32 @@ int main()
         printf("Invalid input");
         return 0;
     }
-    
+
     if (base != 2 && base != 8 && base != 10 && base != 16)
     {
         printf("Invalid base. Please enter 2, 8, 10, or 16.");
         return 0;
     }
-    
+
     if (num[0] == '-')
     {
         printf("Negative numbers are not supported.");
         return 0;
     }
-    
+
     // decimalToBinary(num);
     // decimalToOctal(num);
     // decimalToHexadecimal(num);
     // decimalToBase(decimal, destinationBase);
     result = baseToDecimal(num, base);
-    
+
     if (result == -1)
     {
         return 0;
     }
-    
+
     printf("Enter destination base: ");
-    
+
     if (scanf("%d", &destinationBase) != 1)
     {
         printf("Invalid input");
@@ -246,6 +279,6 @@ int main()
         return 0;
     }
 
-    printf("Decimal: %d\n", result);
+    printf("Decimal: %lld\n", result);
     decimalToBase(result, destinationBase);
 }
