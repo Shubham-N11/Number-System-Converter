@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <ctype.h>
 
 void decimalToBase(long long decimal, int destinationBase)
 {
@@ -58,16 +59,14 @@ void decimalToBase(long long decimal, int destinationBase)
     }
 }
 
-
 long long baseToDecimal(char num[], int base)
 {
     long long decimal = 0;
-    long long power = 1;
-    long long term;
     int digit;
 
-    for (int i = strlen(num) - 1; i >= 0; i--)
+    for (int i = 0; num[i] != '\0'; i++)
     {
+        // Identify the digit
         if (num[i] >= '0' && num[i] <= '9')
         {
             digit = num[i] - '0';
@@ -82,48 +81,50 @@ long long baseToDecimal(char num[], int base)
         }
         else
         {
-            printf("Invalid character");
+            printf("Invalid character.");
             return -1;
         }
 
+        // Validate digit against the source base
         if (digit >= base)
         {
             printf("Invalid digit for the given base.");
             return -1;
         }
 
-        // Check multiplication overflow
-        if (digit != 0 && power > LLONG_MAX / digit)
+        // Check integer overflow before calculation
+        if (decimal > (LLONG_MAX - digit) / base)
         {
             printf("Integer overflow detected.");
             return -1;
         }
 
-        term = digit * power;
-
-        // Check addition overflow
-        if (decimal > LLONG_MAX - term)
-        {
-            printf("Integer overflow detected.");
-            return -1;
-        }
-
-        decimal += term;
-
-        // Check positional power overflow
-        if (i > 0 && power > LLONG_MAX / base)
-        {
-            printf("Integer overflow detected.");
-            return -1;
-        }
-
-        if (i > 0)
-        {
-            power *= base;
-        }
+        // Convert the current digit
+        decimal = decimal * base + digit;
     }
 
     return decimal;
+}
+
+int cleanInputLine(void)
+{
+    int ch;
+    int valid = 1;
+
+    while ((ch = getchar()) != '\n')
+    {
+        if (ch == EOF)
+        {
+            return -1;
+        }
+
+        if (!isspace((unsigned char)ch))
+        {
+            valid = 0;
+        }
+    }
+
+    return valid;
 }
 
 int main()
@@ -132,12 +133,28 @@ int main()
     int base;
     long long result = 0;
     int destinationBase;
+    int status;
 
     printf("Enter number : ");
 
     if (scanf("%31s", num) != 1)
     {
-        printf("No input provided.");
+        cleanInputLine();
+        printf("Invalid input.");
+        return 0;
+    }
+
+    status = cleanInputLine();
+
+    if (status == -1)
+    {
+        printf("Unexpected end of input.");
+        return 0;
+    }
+
+    if (status == 0)
+    {
+        printf("Invalid input.");
         return 0;
     }
 
@@ -145,7 +162,22 @@ int main()
 
     if (scanf("%d", &base) != 1)
     {
-        printf("Invalid input");
+        cleanInputLine();
+        printf("Invalid input.");
+        return 0;
+    }
+
+    status = cleanInputLine();
+
+    if (status == -1)
+    {
+        printf("Unexpected end of input.");
+        return 0;
+    }
+
+    if (status == 0)
+    {
+        printf("Invalid input.");
         return 0;
     }
 
@@ -161,10 +193,6 @@ int main()
         return 0;
     }
 
-    // decimalToBinary(num);
-    // decimalToOctal(num);
-    // decimalToHexadecimal(num);
-    // decimalToBase(decimal, destinationBase);
     result = baseToDecimal(num, base);
 
     if (result == -1)
@@ -176,7 +204,22 @@ int main()
 
     if (scanf("%d", &destinationBase) != 1)
     {
-        printf("Invalid input");
+        cleanInputLine();
+        printf("Invalid input.");
+        return 0;
+    }
+
+    status = cleanInputLine();
+
+    if (status == -1)
+    {
+        printf("Unexpected end of input.");
+        return 0;
+    }
+
+    if (status == 0)
+    {
+        printf("Invalid input.");
         return 0;
     }
 
