@@ -100,7 +100,7 @@ void decimalToBase(int decimal, int destinationBase)
     char output[32];
     int i = 0;
 
-    printf("Decimal to Base %d is :\n", destinationBase);
+    printf("Converted value in base %d is :\n", destinationBase);
 
     if (decimal == 0)
     {
@@ -194,44 +194,58 @@ int main()
     int destinationBase;
 
     printf("Enter number : ");
-    scanf("%31s", num);
-    printf("Enter base : ");
-    scanf("%d", &base);
-
-    if (base != 2 && base != 8 && base != 16)
+    
+    if (scanf("%31s", num) != 1)
     {
-        printf("Invalid base. Please enter 2, 8, or 16.");
+        printf("No input provided.");
         return 0;
     }
 
+    printf("Enter base : ");
+
+    if (scanf("%d", &base) != 1)
+    {
+        printf("Invalid input");
+        return 0;
+    }
+    
+    if (base != 2 && base != 8 && base != 10 && base != 16)
+    {
+        printf("Invalid base. Please enter 2, 8, 10, or 16.");
+        return 0;
+    }
+    
     if (num[0] == '-')
     {
         printf("Negative numbers are not supported.");
         return 0;
     }
-
+    
     // decimalToBinary(num);
     // decimalToOctal(num);
     // decimalToHexadecimal(num);
     // decimalToBase(decimal, destinationBase);
     result = baseToDecimal(num, base);
-
+    
     if (result == -1)
     {
         return 0;
     }
-
+    
     printf("Enter destination base: ");
-    scanf("%d", &destinationBase);
+    
+    if (scanf("%d", &destinationBase) != 1)
+    {
+        printf("Invalid input");
+        return 0;
+    }
 
-    if (destinationBase != 2 && destinationBase != 8 && destinationBase != 16)
+    if (destinationBase != 2 && destinationBase != 8 && destinationBase != 10 && destinationBase != 16)
     {
         printf("Invalid destination base.");
         return 0;
     }
 
     printf("Decimal: %d\n", result);
-
-    printf("Converted number:\n");
     decimalToBase(result, destinationBase);
 }
