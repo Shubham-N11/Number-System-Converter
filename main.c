@@ -4,13 +4,22 @@
 #include <ctype.h>
 #include <errno.h>
 
-#define CONVERSION_SUCCESS 1
-#define INVALID_CHARACTER 0
-#define INVALID_DIGIT -1
-#define INTEGER_OVERFLOW -2
+/* Conversion status codes */
+#define CONVERSION_SUCCESS  1
+#define INVALID_CHARACTER   0
+#define INVALID_DIGIT      -1
+#define INTEGER_OVERFLOW   -2
 #define NULL_POINTER_ERROR -3
+#define INVALID_BASE       -4
 
-// Clears the remaining input line and checks for unexpected characters.
+/* Function prototypes */
+int cleanInputLine(void);
+int isValidBase(long base);
+
+int baseToDecimal(const char *num, int base, long long *result);
+int decimalToBase(long long decimal, int destinationBase);
+
+/* Clears remaining input and detects unexpected characters. */
 int cleanInputLine(void)
 {
     int ch;
@@ -32,20 +41,36 @@ int cleanInputLine(void)
     return valid;
 }
 
-// Converts a number from any supported base to decimal.
-int baseToDecimal(char num[], int base, long long *result)
+/* Checks whether a base is supported. */
+int isValidBase(long base)
+{
+    return (base == 2 || base == 8 ||
+            base == 10 || base == 16);
+}
+
+/* Converts a number from a supported base to decimal. */
+int baseToDecimal(const char *num, int base, long long *result)
 {
     long long decimal = 0;
     int digit;
 
-    if (result == NULL)
+    if (num == NULL || result == NULL)
     {
         return NULL_POINTER_ERROR;
     }
 
+    if (!isValidBase(base))
+    {
+        return INVALID_BASE;
+    }
+
+    if (num[0] == '\0')
+    {
+        return INVALID_CHARACTER;
+    }
+
     for (int i = 0; num[i] != '\0'; i++)
     {
-        // Identify the digit.
         if (num[i] >= '0' && num[i] <= '9')
         {
             digit = num[i] - '0';
@@ -63,39 +88,45 @@ int baseToDecimal(char num[], int base, long long *result)
             return INVALID_CHARACTER;
         }
 
-        // Validate digit against the source base.
         if (digit >= base)
         {
             return INVALID_DIGIT;
         }
 
-        // Check integer overflow.
         if (decimal > (LLONG_MAX - digit) / base)
         {
             return INTEGER_OVERFLOW;
         }
 
-        // Convert the current digit.
         decimal = decimal * base + digit;
     }
 
-    // Store the final result in the caller's variable.
     *result = decimal;
 
     return CONVERSION_SUCCESS;
 }
 
-// Converts a decimal number to any supported destination base.
-void decimalToBase(long long decimal, int destinationBase)
+/* Converts a non-negative decimal number to a supported base. */
+int decimalToBase(long long decimal, int destinationBase)
 {
     int remain;
     char output[65];
     int i = 0;
 
+    if (!isValidBase(destinationBase))
+    {
+        return INVALID_BASE;
+    }
+
+    if (decimal < 0)
+    {
+        return INVALID_CHARACTER;
+    }
+
     if (decimal == 0)
     {
-        printf("0\n");
-        return;
+        printf("0");
+        return CONVERSION_SUCCESS;
     }
 
     while (decimal > 0)
@@ -111,23 +142,76 @@ void decimalToBase(long long decimal, int destinationBase)
             output[i] = 'A' + (remain - 10);
         }
 
-        decimal = decimal / destinationBase;
+        decimal /= destinationBase;
         i++;
     }
 
-    // Print the stored digits in reverse order.
     for (int j = i - 1; j >= 0; j--)
     {
         printf("%c", output[j]);
     }
 
-    printf("\n");
+    return CONVERSION_SUCCESS;
 }
 
-// Checks whether a base is supported.
-int isValidBase(long base)
+/* Reads and validates a string from standard input. */
+int readInput(char *buffer, int size)
 {
-    return (base == 2 || base == 8 || base == 10 || base == 16);
+    int scanStatus;
+    int lineStatus;
+
+    scanStatus = scanf("%31s", buffer);
+
+    if (scanStatus == EOF)
+    {
+        return -1;
+    }
+
+    if (scanStatus != 1)
+    {
+        return 0;
+    }
+
+    lineStatus = cleanInputLine();
+
+    if (lineStatus == -1)
+    {
+        return -1;
+    }
+
+    if (lineStatus == 0)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Safely parses a base supplied as text. */
+int parseBase(const char *input, int *base)
+{
+    char *endptr;
+    long parsed;
+
+    errno = 0;
+
+    parsed = strtol(input, &endptr, 10);
+
+    if (errno == ERANGE ||
+        endptr == input ||
+        *endptr != '\0')
+    {
+        return 0;
+    }
+
+    if (!isValidBase(parsed))
+    {
+        return 0;
+    }
+
+    *base = (int)parsed;
+
+    return 1;
 }
 
 int main(void)
@@ -141,185 +225,137 @@ int main(void)
 
     long long result;
 
-    long parsedBase;
-    long parsedDestination;
-
-    char *endptr;
-
     int status;
-    int scanStatus;
 
-    int conversionStatus;
+    printf("====================================\n");
+    printf("       NUMBER SYSTEM CONVERTER\n");
+    printf("====================================\n");
 
-    // Read the number.
-    printf("Enter number: ");
+    /* Read number */
+    printf("\nEnter number: ");
 
-    scanStatus = scanf("%31s", num);
-
-    if (scanStatus == EOF)
-    {
-        printf("Unexpected end of input.\n");
-        return 0;
-    }
-
-    if (scanStatus != 1)
-    {
-        cleanInputLine();
-        printf("Invalid input.\n");
-        return 0;
-    }
-
-    status = cleanInputLine();
+    status = readInput(num, sizeof(num));
 
     if (status == -1)
     {
         printf("Unexpected end of input.\n");
-        return 0;
+        return 1;
     }
 
-    if (status == 0)
+    if (status != 1)
     {
         printf("Invalid input.\n");
-        return 0;
+        return 1;
     }
 
-    // Reject negative numbers.
     if (num[0] == '-')
     {
         printf("Negative numbers are not supported.\n");
-        return 0;
+        return 1;
     }
 
-    // Read the source base.
-    printf("Enter base: ");
+    /* Read source base */
+    printf("Enter source base (2, 8, 10, 16): ");
 
-    scanStatus = scanf("%31s", baseInput);
-
-    if (scanStatus == EOF)
-    {
-        printf("Unexpected end of input.\n");
-        return 0;
-    }
-
-    if (scanStatus != 1)
-    {
-        cleanInputLine();
-        printf("Invalid input.\n");
-        return 0;
-    }
-
-    status = cleanInputLine();
+    status = readInput(baseInput, sizeof(baseInput));
 
     if (status == -1)
     {
         printf("Unexpected end of input.\n");
-        return 0;
+        return 1;
     }
 
-    if (status == 0)
+    if (status != 1)
     {
         printf("Invalid input.\n");
-        return 0;
+        return 1;
     }
 
-    // Parse the source base safely.
-    errno = 0;
-    parsedBase = strtol(baseInput, &endptr, 10);
-
-    if (errno == ERANGE || endptr == baseInput || *endptr != '\0')
+    if (!parseBase(baseInput, &base))
     {
-        printf("Invalid base input.\n");
-        return 0;
+        printf("Invalid source base.\n");
+        return 1;
     }
 
-    if (!isValidBase(parsedBase))
+    /* Convert source number to decimal */
+    status = baseToDecimal(num, base, &result);
+
+    if (status != CONVERSION_SUCCESS)
     {
-        printf("Invalid base. Please enter 2, 8, 10, or 16.\n");
-        return 0;
+        switch (status)
+        {
+            case INVALID_CHARACTER:
+                printf("Invalid character in number.\n");
+                break;
+
+            case INVALID_DIGIT:
+                printf("Digit is invalid for the given base.\n");
+                break;
+
+            case INTEGER_OVERFLOW:
+                printf("Integer overflow detected.\n");
+                break;
+
+            case NULL_POINTER_ERROR:
+                printf("Null pointer error.\n");
+                break;
+
+            case INVALID_BASE:
+                printf("Unsupported source base.\n");
+                break;
+
+            default:
+                printf("Unknown conversion error.\n");
+        }
+
+        return 1;
     }
 
-    base = (int)parsedBase;
+    /* Read destination base */
+    printf("Enter destination base (2, 8, 10, 16): ");
 
-    // Convert the source number to decimal.
-    conversionStatus = baseToDecimal(num, base, &result);
-
-    if (conversionStatus == INVALID_CHARACTER)
-    {
-        printf("Invalid character.\n");
-        return 0;
-    }
-    else if (conversionStatus == INVALID_DIGIT)
-    {
-        printf("Invalid digit for the given base.\n");
-        return 0;
-    }
-    else if (conversionStatus == INTEGER_OVERFLOW)
-    {
-        printf("Integer overflow detected.\n");
-        return 0;
-    }
-    else if (conversionStatus == NULL_POINTER_ERROR)
-    {
-        printf("Invalid result pointer.\n");
-        return 0;
-    }
-
-    // Read the destination base.
-    printf("Enter destination base: ");
-
-    scanStatus = scanf("%31s", destinationInput);
-
-    if (scanStatus == EOF)
-    {
-        printf("Unexpected end of input.\n");
-        return 0;
-    }
-
-    if (scanStatus != 1)
-    {
-        cleanInputLine();
-        printf("Invalid input.\n");
-        return 0;
-    }
-
-    status = cleanInputLine();
+    status = readInput(destinationInput, sizeof(destinationInput));
 
     if (status == -1)
     {
         printf("Unexpected end of input.\n");
-        return 0;
+        return 1;
     }
 
-    if (status == 0)
+    if (status != 1)
     {
         printf("Invalid input.\n");
-        return 0;
+        return 1;
     }
 
-    // Parse the destination base safely.
-    errno = 0;
-    parsedDestination = strtol(destinationInput, &endptr, 10);
-
-    if (errno == ERANGE || endptr == destinationInput || *endptr != '\0')
+    if (!parseBase(destinationInput, &destinationBase))
     {
-        printf("Invalid destination base input.\n");
-        return 0;
+        printf("Invalid destination base.\n");
+        return 1;
     }
 
-    if (!isValidBase(parsedDestination))
+    /* Display conversion result */
+    printf("\n====================================\n");
+    printf("             RESULT\n");
+    printf("====================================\n");
+
+    printf("Original number : %s\n", num);
+    printf("Source base     : %d\n", base);
+    printf("Decimal value   : %lld\n", result);
+
+    printf("Converted value : ");
+
+    status = decimalToBase(result, destinationBase);
+
+    if (status != CONVERSION_SUCCESS)
     {
-        printf("Invalid destination base. Please enter 2, 8, 10, or 16.\n");
-        return 0;
+        printf("\nConversion failed.\n");
+        return 1;
     }
 
-    destinationBase = (int)parsedDestination;
+    printf("\nDestination base: %d\n", destinationBase);
 
-    // Display the result.
-    printf("\nDecimal: %lld\n", result);
-
-    printf("Converted value in base %d: ", destinationBase);
-
-    decimalToBase(result, destinationBase);
+    printf("====================================\n");
 
     return 0;
 }
